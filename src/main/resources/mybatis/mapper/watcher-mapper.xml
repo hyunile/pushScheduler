@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wooricard.scheduler.watcher.repository.WatcherMapper">
+
+	<insert id="insertServerError" parameterType="ResultData" >	
+       <selectKey keyProperty="seqNo" resultType="long" order="BEFORE">
+            SELECT SEQ_T_PUSH_MSG_RECV_MASTER.NEXTVAL FROM DUAL
+        </selectKey>	
+        
+		INSERT INTO T_PUSH_FAIL
+		(
+		  SEQNO
+		, PSID
+		, PNSID
+		, RESULTCODE
+		, RESULTMSG
+		, REGDATE
+		, MODEDATE
+		)
+		VALUES
+		(
+		  #{seqNo}
+		, #{legacyId}
+		, #{transType}
+		, #{resultCode}
+		, #{resultMsg}
+		, SYSDATE
+		, SYSDATE
+		)
+	</insert>
+	
+	<select id="selectProviderFail" parameterType="long" resultType="map">
+	  SELECT
+	    RESULTMSG
+	  FROM
+	    T_PUSH_FAIL
+	  WHERE
+	    SEQNO = #{number}
+	
+	</select>
+	
+    <select id="selectServerError" parameterType="QueryParams" resultType="int">
+      SELECT
+        COUNT(*)
+      FROM
+	    T_PUSH_FAIL
+	  WHERE
+	    REGDATE > SYSDATE - #{number2}/24/60
+	    AND PSID = #{keyword}
+	    AND RESULTCODE = #{keyword2}
+        
+    </select>
+    
+    <select id="selectFailMsg" parameterType="long" resultType="map">
+      SELECT
+        RESULTCODE
+      , RESULTMSG
+      FROM
+	    T_PUSH_FAIL
+	  WHERE
+	    SEQNO = #{seqNo}    
+    </select>
+    
+    <select id="selectSmsReceivers" resultType="map">
+	  SELECT
+	    A.USER_ID as USERID
+	  , A.USER_TP as TEL
+	  , A.USE_YN as USE
+	  , B.AUTH_GRP_ID as GRPID
+	  FROM 
+	    MORPHEUS.TB_SYS_USER A
+	  LEFT JOIN 
+	    MORPHEUS.TB_SYS_USER_AUTH_GRP B 
+	  ON 
+	    A.USER_ID = B.USER_ID
+	  LEFT JOIN 
+	    MORPHEUS.TB_SYS_AUTH_GRP C 
+	  ON 
+	    B.AUTH_GRP_ID = C.AUTH_GRP_ID
+	  WHERE 
+	    B.AUTH_GRP_ID = '0000000004'    
+    </select>
+</mapper>

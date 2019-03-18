@@ -1,0 +1,810 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wooricard.scheduler.repository.PushMapper">
+
+    <select id="selectSingleMessageData" parameterType="int" resultType="MessageData">
+      SELECT
+        M.REAL_SEQNO AS msgNo
+      , M.TRANS_CODE AS transCode
+      , M.MSG_CODE AS msgCode
+      , M.TRANS_UNIQUE AS transUnique
+      , M.PROCESS_DATE AS processDate
+      , M.CARD_NO AS cardNo
+      , M.APV_NO AS apvNo
+      , M.NAME_NO AS nameNo
+      , M.TEL_NO AS telNo
+      , M.NAME AS name
+      , M.PUSH_TYPE AS pushType
+      , M.TRANS_TYPE AS transType
+      , M.APV_MONTH AS apvMonth
+      , M.APVRQ_MTD_CD AS apvrqMtdCd
+      , M.APV_AMOUNT AS apvAmount
+      , M.CHK_BL AS chkBl
+      , M.MCH_NAME AS mchName
+      , M.TRANS_DATE AS transDate
+      , M.APP_INST_YN AS appInstYn
+      , M.REJECT_REASON AS rejectReason
+      , M.SMART_APP_YN AS smartAppYn
+      , M.CMPGN_ID AS cmpgnId
+      , M.DNIS AS dnis
+      , M.IMG_URL AS imgUrl1
+      , M.IMG_URL2 AS imgUrl2
+      , M.IMG_URL3 AS imgUrl3
+      , M.LINK_URL1 AS linkUrl1
+      , M.LINK_URL2 AS linkUrl2
+      , M.LINK_URL3 AS linkUrl3
+      , M.TYPE1 
+      , M.TYPE2
+      , M.TYPE3
+      , M.LINK_URL AS linkUrl
+      , M.APP_ID AS appId
+      , M.MESSAGE AS message
+      , M.EXT AS ext
+      , M.SENDER_CODE AS senderCode
+      , M.SERVICE_CODE AS serviceCode
+      , M.PRIORITY AS priority
+      , M.SUB_TITLE AS title
+      , M.RESERVE_DATE AS reserveDate
+      , M.SEND_TIME_LIMIT AS sendTimeLimit
+      , M.CUID AS cuid
+      , M.PUSH_FAIL_SMS_SEND AS pushFailSmsSend
+      , M.SMS_READ_WAIT_MINUTE AS smsReadWaiMinute
+      , M.DOZ_GCM_SEND AS dozGcmSend
+      , M.EVENT_NO as eventNo
+      , SYSDATE AS selectDate
+      FROM
+        T_PUSH_REALTIME_MSG M
+      WHERE
+        M.RESERVE_DATE <![CDATA[<=]]> SYSDATE
+        AND M.PROCESS_FLAG = 'N'
+	    AND ROWNUM <![CDATA[<=]]> #{count}
+	  FOR UPDATE OF M.REAL_SEQNO NOWAIT
+	</select>
+
+	<update id="updateSingleMessageDataToProcess" parameterType="QueryParams">
+	  UPDATE 
+	    T_PUSH_REALTIME_MSG
+	  SET
+	    PROCESS_FLAG = 'Y'
+	  , LEGACY_ID = #{keyword}
+	  , MODDATE = SYSDATE
+	  WHERE
+	    REAL_SEQNO IN
+	  <foreach collection="list" item="item" open="(" close=")" separator=",">
+	    #{item}
+	  </foreach>
+	</update>
+
+	<update id="updateSingleMessageDataRollback" parameterType="string">
+	  UPDATE 
+	    T_PUSH_REALTIME_MSG
+	  SET
+		PROCESS_FLAG = 'N'
+	  , LEGACY_ID = NULL
+	  , MODDATE = SYSDATE
+	  WHERE
+	    LEGACY_ID = #{legacyId}
+	    AND PROCESS_FLAG = 'Y'
+	</update>
+	
+	<insert id="insertSingleResult" parameterType="ResultData">
+	  INSERT INTO 
+	    T_PUSH_REALTIME_MSG_COMPLETED 
+	  (
+	    REAL_SEQNO
+	  <if test="seqNo != null">
+	  , PUSH_SEQNO
+	  </if>
+	  <if test="transCode != null">
+	  , TRANS_CODE
+	  </if>
+	  <if test="msgCode != null">
+	  , MSG_CODE
+	  </if>
+	  <if test="transUnique != null">
+	  , TRANS_UNIQUE 
+	  </if>
+	  , PROCESS_DATE 
+<!-- 
+	  , CARD_NO 
+	  , NAME_NO 
+-->
+	  <if test="apvNo != null">
+	  , APV_NO 
+	  </if>
+	  <if test="telNo != null">
+	  , TEL_NO 
+	  </if>
+	  <if test="name != null">
+	  , NAME 
+	  </if>
+	  <if test="pushType != null">
+	  , PUSH_TYPE 
+	  </if>
+	  <if test="transType != null">
+	  , TRANS_TYPE 
+	  </if>
+	  <if test="apvMonth != null">
+	  , APV_MONTH 
+	  </if>
+	  <if test="apvrqMtdCd != null">
+	  , APVRQ_MTD_CD 
+	  </if>
+	  <if test="apvAmount != null">
+	  , APV_AMOUNT 
+	  </if>
+	  <if test="chkBl != null">
+	  , CHK_BL 
+	  </if>
+	  <if test="mchName != null">
+	  , MCH_NAME 
+	  </if>
+	  <if test="transDate != null">
+	  , TRANS_DATE 
+	  </if>
+	  <if test="appInstYn != null">
+	  , APP_INST_YN 
+	  </if>
+	  <if test="rejectReason != null">
+	  , REJECT_REASON 
+	  </if>
+	  <if test="smartAppYn != null">
+	  , SMART_APP_YN 
+	  </if>
+	  , APP_ID 
+	  , MESSAGE 
+	  <if test="ext != null">
+	  , EXT 
+	  </if>
+	  , SENDER_CODE 
+	  , SERVICE_CODE 
+	  , PRIORITY 
+	  <if test="title != null">
+	  , SUB_TITLE 
+	  </if>
+	  , RESERVE_DATE 
+	  , SEND_TIME_LIMIT 
+	  , CUID 
+	  <if test="legacyId != null">
+	  , LEGACY_ID 
+	  </if>
+	  , PUSH_FAIL_SMS_SEND 
+	  , SMS_READ_WAIT_MINUTE 
+	  , DOZ_GCM_SEND      	
+	  , SELECT_DATE 
+	  , SENT_DATE 
+	  , BADGE_NO
+	  , RESULT_CODE
+	  , RESULT_MSG
+	  , REGDATE
+	  )
+	  VALUES
+	  (
+	  #{msgNo}
+	  <if test="seqNo != null">
+	  , #{seqNo}
+	  </if>
+	  <if test="transCode != null">
+	  , #{transCode}
+	  </if>
+	  <if test="msgCode != null">
+	  , #{msgCode}
+	  </if>
+	  <if test="transUnique != null">
+	  , #{transUnique}
+	  </if>
+	  , #{processDate}
+<!-- 	
+	  , #{cardNo}
+	  , #{nameNo}
+-->
+	  <if test="apvNo != null">
+	  , #{apvNo}
+	  </if>
+	  <if test="telNo != null">
+	  , #{telNo}
+	  </if>
+	  <if test="name != null">
+	  , #{name}
+	  </if>
+	  <if test="pushType != null">
+	  , #{pushType}
+	  </if>
+	  <if test="transType != null">
+	  , #{transType}
+	  </if>
+	  <if test="apvMonth != null">
+	  , #{apvMonth}
+	  </if>
+	  <if test="apvrqMtdCd != null">
+	  , #{apvrqMtdCd}
+	  </if>
+	  <if test="apvAmount != null">
+	  , #{apvAmount}
+	  </if>
+	  <if test="chkBl != null">
+	  , #{chkBl}
+	  </if>
+	  <if test="mchName != null">
+	  , #{mchName}
+	  </if>
+	  <if test="transDate != null">
+	  , #{transDate}
+	  </if>
+	  <if test="appInstYn != null">
+	  , #{appInstYn}
+	  </if>
+	  <if test="rejectReason != null">
+	  , #{rejectReason}
+	  </if>
+	  <if test="smartAppYn != null">
+	  , #{smartAppYn}
+	  </if>
+	  , #{appId}
+	  , #{message}
+	  <if test="ext != null">
+	  , #{ext}
+	  </if>
+	  , #{senderId}
+	  , #{serviceCode}
+	  , #{priority}
+	  <if test="title != null">
+	  , #{title}
+	  </if>
+	  , #{reserveDate}
+	  , #{sendTimeLimit}
+	  , #{cuid}
+	  <if test="legacyId != null">
+	  , #{legacyId}
+	  </if>
+	  , #{pushFailSmsSend}
+	  , #{smsReadWaiMinute}
+	  , #{dozGcmSend}
+	  , #{selectDate}
+	  , SYSDATE
+	  , #{badgeNo}
+	  , #{resultCode}
+	  , #{resultMsg}
+	  , SYSDATE	    	
+	  )
+	</insert>
+
+    <update id="updateSingleReadResult" parameterType="QueryParams">
+	  UPDATE 
+	    T_PUSH_REALTIME_MSG_COMPLETED
+	  SET
+	    READ_DATE = SYSDATE
+	  , RESULT_CODE = #{keyword}
+	  , RESULT_MSG = #{keyword2}
+	  , MODDATE = SYSDATE
+	  WHERE
+	    PUSH_SEQNO IN 
+	  (
+		SELECT
+		  SEQNO
+		FROM
+		  T_PUSH_SUCCESS 
+		WHERE
+		  STATUS = 3
+		<choose>
+		  <when test="date != null">
+			AND READDATE <![CDATA[>=]]> #{date}
+    	  </when>
+    	  <otherwise>
+     	    AND READDATE <![CDATA[>=]]> (SYSDATE - #{number2} / 24)
+    	  </otherwise>
+    	</choose>
+      )
+    </update>
+    
+    <update id="updateSingleFailedResult" parameterType="QueryParams">
+      MERGE INTO
+    	T_PUSH_REALTIME_MSG_COMPLETED C
+      USING
+      (
+		SELECT
+		  SEQNO
+	    , NVL(RC.CODE, 'E9990') AS CODE
+	    , NVL(RC.MSG, 'Unknown') || ' [' || PF.RESULTMSG || ']' AS MSG
+	    FROM
+          MORPHEUS.T_PUSH_FAIL PF
+	    LEFT JOIN
+	      MORPHEUS.T_PUSH_RESULT_CODE RC
+	    ON
+	      PF.RESULTCODE = RC.ERR_NUM2
+        WHERE
+    	  <choose>
+    	    <when test="date != null">
+     	      PF.REGDATE <![CDATA[>=]]> #{date}
+    	    </when>
+    	    <otherwise>
+     	      PF.REGDATE <![CDATA[>=]]> (SYSDATE - #{number2} / 24)
+    	    </otherwise>
+    	  </choose>
+       ) F
+       ON
+         (C.PUSH_SEQNO = F.SEQNO)
+       WHEN MATCHED THEN
+       UPDATE
+       SET
+         RESULT_CODE = CODE
+       , RESULT_MSG = MSG
+       , MODDATE = SYSDATE
+    </update>
+    
+    <delete id="deleteSingleMessageData" parameterType="long">
+      DELETE FROM 
+    	T_PUSH_REALTIME_MSG
+      WHERE 
+   		REAL_SEQNO = #{seqNo}
+    </delete>
+    
+    <update id="updateSingleMessageDataDone" parameterType="long">
+	  UPDATE 
+	    T_PUSH_REALTIME_MSG
+	  SET
+	    PROCESS_FLAG = 'X'
+	  , MODDATE = SYSDATE
+	  WHERE
+   		REAL_SEQNO = #{seqNo}
+    </update>
+    
+    <select id="selectBatchMessageData" parameterType="int" resultType="MessageData">
+      SELECT /*+INDEX(I I_PUSH_BATCH_INFO_STATUS)*/
+        M.BATCH_SEQNO AS msgNo
+      , M.BATCH_ID AS batchId
+      , I.PROCESS_DATE AS processDate
+      , I.PROCESS_TIME AS processTime
+      , I.TRANS_CODE AS transCode
+      , I.TITLE AS batchTitle
+      , I.USE_TEMPLETE AS useTemplete
+      , I.TEMPLETE AS templete
+      , I.PAGE_ID AS pageId
+      , I.KEY1 
+      , I.KEY2 
+      , I.IMG_URL1 AS imgUrl1
+      , I.IMG_URL2 AS imgUrl2
+      , I.IMG_URL3 AS imgUrl3
+      , I.LINK_URL1 AS linkUrl1
+      , I.LINK_URL2 AS linkUrl2
+      , I.LINK_URL3 AS linkUrl3
+      , I.TYPE1 
+      , I.TYPE2
+      , I.TYPE3
+      , I.EVENT_NO as eventNo
+      , M.CARD_NO AS cardNo
+      , M.APV_NO AS apvNo
+      , M.NAME_NO AS nameNo
+      , M.TEL_NO AS telNo
+      , M.NAME AS name
+      , M.PUSH_TYPE AS pushType
+      , M.TRANS_TYPE AS transType
+      , M.APV_MONTH AS apvMonth
+      , M.APVRQ_MTD_CD AS apvrqMtdCd
+      , M.APV_AMOUNT AS apvAmount
+      , M.CHK_BL AS chkBl
+      , M.MCH_NAME AS mchName
+      , M.TRANS_DATE AS transDate
+      , M.STL_DATE AS stlDate
+      , M.APP_INST_YN AS appInstYn
+      , I.APP_ID AS appId
+      , M.MESSAGE AS message
+      , M.EXT AS ext
+      , M.SENDER_CODE AS senderCode
+      , M.SERVICE_CODE AS serviceCode
+      , M.PRIORITY AS priority
+      , M.SUB_TITLE AS title
+      , M.RESERVE_DATE AS reserveDate
+      , M.SEND_TIME_LIMIT AS sendTimeLimit
+      , M.CUID AS cuid
+      , M.PUSH_FAIL_SMS_SEND AS pushFailSmsSend
+      , M.SMS_READ_WAIT_MINUTE AS smsReadWaiMinute
+      , M.DOZ_GCM_SEND AS dozGcmSend
+      , SYSDATE AS selectDate
+      FROM
+        T_PUSH_BATCH_INFO I
+      JOIN
+        T_PUSH_BATCH_MSG M
+      ON
+        I.BATCH_ID = M.BATCH_ID
+      WHERE
+        I.STATUS IN ('S', 'G')
+        AND I.PROCESS_DATE || I.PROCESS_TIME <![CDATA[<=]]> TO_CHAR(SYSDATE, 'YYYYMMDDHH24MI')
+        AND PROCESS_FLAG = 'N'
+        AND ROWNUM <![CDATA[<=]]> #{count}
+      FOR UPDATE OF M.BATCH_SEQNO NOWAIT
+    </select>
+    
+    <update id="updateBatchMessageDataToProcess" parameterType="QueryParams">
+      UPDATE 
+        T_PUSH_BATCH_MSG
+      SET
+        PROCESS_FLAG = 'Y'
+      , LEGACY_ID = #{keyword}
+      , MODDATE = SYSDATE
+      WHERE
+        BATCH_SEQNO IN
+      <foreach collection="list" item="item" open="(" close=")" separator=",">
+        #{item}
+      </foreach>
+    </update>
+
+    <update id="updateBatchMessageDataRollback" parameterType="string">
+      UPDATE 
+        T_PUSH_BATCH_MSG
+      SET
+        PROCESS_FLAG = 'N'
+      , LEGACY_ID = NULL
+      , MODDATE = SYSDATE
+      WHERE
+        LEGACY_ID = #{legacyId}
+    </update>
+
+    <insert id="insertBatchResult" parameterType="ResultData">
+      INSERT INTO 
+        T_PUSH_BATCH_MSG_COMPLETED 
+      (
+        BATCH_SEQNO
+      , BATCH_ID
+	  <if test="seqNo != null">
+      , PUSH_SEQNO
+	  </if>
+      , APP_ID 
+<!--  
+      , CARD_NO 
+      , NAME_NO 
+-->      
+	  <if test="apvNo != null">
+      , APV_NO 
+	  </if>
+	  <if test="telNo != null">
+      , TEL_NO 
+	  </if>
+	  <if test="name != null">
+      , NAME 
+	  </if>
+	  <if test="transType != null">
+      , TRANS_TYPE 
+	  </if>
+	  <if test="apvMonth != null">
+      , APV_MONTH 
+	  </if>
+	  <if test="apvrqMtdCd != null">
+      , APVRQ_MTD_CD 
+	  </if>
+	  <if test="apvAmount != null">
+      , APV_AMOUNT 
+	  </if>
+	  <if test="chkBl != null">
+      , CHK_BL 
+	  </if>
+ 	  <if test="mchName != null">
+      , MCH_NAME 
+	  </if>
+	  <if test="transDate != null">
+      , TRANS_DATE 
+	  </if>
+	  <if test="stlDate != null">
+      , STL_DATE 
+	  </if>
+	  <if test="appInstYn != null">
+      , APP_INST_YN 
+	  </if>
+      , MESSAGE 
+	  <if test="ext != null">
+      , EXT 
+	  </if>
+      , SENDER_CODE 
+      , SERVICE_CODE 
+      , PRIORITY 
+	  <if test="title != null">
+      , SUB_TITLE 
+	  </if>
+      , RESERVE_DATE 
+	  <if test="sendTimeLimit != null">
+      , SEND_TIME_LIMIT 
+	  </if>
+      , CUID 
+	  <if test="legacyId != null">
+      , LEGACY_ID 
+	  </if>
+      , PUSH_FAIL_SMS_SEND 
+      , SMS_READ_WAIT_MINUTE 
+      , DOZ_GCM_SEND      	
+      , SELECT_DATE 
+      , SENT_DATE 
+      , BADGE_NO
+      , RESULT_CODE
+      , RESULT_MSG
+      , REGDATE
+      )
+      VALUES
+      (
+        #{msgNo}
+      , #{batchId}
+	  <if test="seqNo != null">
+      , #{seqNo}
+	  </if>
+      , #{appId}
+<!--      
+      , #{cardNo}
+      , #{nameNo}
+-->
+ 	  <if test="apvNo != null">
+      , #{apvNo}
+	  </if>
+	  <if test="telNo != null">
+      , #{telNo}
+	  </if>
+	  <if test="name != null">
+      , #{name}
+	  </if>
+	  <if test="transType != null">
+      , #{transType}
+	  </if>
+	  <if test="apvMonth != null">
+      , #{apvMonth}
+	  </if>
+	  <if test="apvrqMtdCd != null">
+      , #{apvrqMtdCd}
+	  </if>
+	  <if test="apvAmount != null">
+      , #{apvAmount}
+	  </if>
+	  <if test="chkBl != null">
+      , #{chkBl}
+	  </if>
+	  <if test="mchName != null">
+      , #{mchName}
+	  </if>
+	  <if test="transDate != null">
+      , #{transDate}
+	  </if>
+	  <if test="stlDate != null">
+      , #{stlDate}
+	  </if>
+	  <if test="appInstYn != null">
+      , #{appInstYn}
+	  </if>
+      , #{message}
+	  <if test="ext != null">
+      , #{ext}
+	  </if>
+      , #{senderId}
+      , #{serviceCode}
+      , #{priority}
+	  <if test="title != null">
+      , #{title}
+	  </if>
+      , TO_DATE(#{processDate} || #{processTime}, 'YYYYMMDDHH24MI')
+	  <if test="sendTimeLimit != null">
+      , #{sendTimeLimit}
+	  </if>
+      , #{cuid}
+	  <if test="legacyId != null">
+      , #{legacyId}
+	  </if>
+      , #{pushFailSmsSend}
+      , #{smsReadWaiMinute}
+      , #{dozGcmSend}
+      , #{selectDate}
+      , SYSDATE
+      , #{badgeNo}
+      , #{resultCode}
+      , #{resultMsg}
+      , SYSDATE	    	
+      )
+    </insert>
+
+    <update id="updateBatchReadResult" parameterType="QueryParams">
+      UPDATE 
+        T_PUSH_BATCH_MSG_COMPLETED
+      SET
+	    READ_DATE = SYSDATE
+	  , RESULT_CODE = #{keyword}
+	  , RESULT_MSG = #{keyword2}
+      , MODDATE = SYSDATE
+      WHERE
+        PUSH_SEQNO IN 
+        (
+          SELECT
+            SEQNO
+          FROM
+            T_PUSH_SUCCESS 
+          WHERE
+          <choose>
+            <when test="date != null">
+              READDATE <![CDATA[>=]]> #{date}
+            </when>
+            <otherwise>
+              READDATE <![CDATA[>=]]> (SYSDATE - #{number2} / 24)
+            </otherwise>
+          </choose>
+          AND STATUS = 3
+        )
+    </update>  
+
+    <update id="updateBatchFailedResult" parameterType="QueryParams">
+      MERGE INTO
+        T_PUSH_BATCH_MSG_COMPLETED C
+      USING
+      (
+		SELECT
+		  SEQNO
+	    , NVL(RC.CODE, 'E9990') AS CODE
+	    , NVL(RC.MSG, 'Unknown') || ' [' || PF.RESULTMSG || ']' AS MSG
+	    FROM
+          MORPHEUS.T_PUSH_FAIL PF
+	    LEFT JOIN
+	      MORPHEUS.T_PUSH_RESULT_CODE RC
+	    ON
+	      PF.RESULTCODE = RC.ERR_NUM2
+        WHERE
+    	  <choose>
+    	    <when test="date != null">
+     	      PF.REGDATE <![CDATA[>=]]> #{date}
+    	    </when>
+    	    <otherwise>
+     	      PF.REGDATE <![CDATA[>=]]> (SYSDATE - #{number2} / 24)
+    	    </otherwise>
+    	  </choose>
+      ) F
+      ON
+        (C.PUSH_SEQNO = F.SEQNO)
+      WHEN MATCHED THEN
+      UPDATE
+      SET
+        RESULT_CODE = CODE
+      , RESULT_MSG = MSG
+      , MODDATE = SYSDATE
+    </update>      
+    
+    <delete id="deleteBatchMessageData" parameterType="long">
+      DELETE FROM 
+        T_PUSH_BATCH_MSG
+      WHERE 
+        BATCH_SEQNO = #{seqNo}
+    </delete>  
+    
+    <select id="selectBadgeCount" parameterType="QueryParams" resultType="int">
+      SELECT 
+        COUNT(SEQNO)
+      FROM
+        T_PUSH_SUCCESS
+      WHERE
+        CUID = #{keyword2}
+        AND APPID = #{keyword}
+        AND STATUS != 3
+    </select>
+
+    <select id="selectDbTime" resultType="date">
+      SELECT 
+        SYSDATE
+      FROM
+        DUAL
+    </select>
+<!--     
+    <select id="selectCompletedBatch" resultType="string">
+  	  SELECT
+  	    I.BATCH_ID
+  	  FROM
+  	  (
+        SELECT 
+          BATCH_ID
+        , STATUS
+        FROM
+          T_PUSH_BATCH_INFO
+        WHERE
+          STATUS = 'S'
+      ) I
+      LEFT JOIN
+      (      
+        SELECT 
+          BATCH_ID
+        , COUNT(*) CNT
+        FROM
+          T_PUSH_BATCH_MSG
+        GROUP BY 
+          BATCH_ID
+      ) M
+      ON 
+        I.BATCH_ID = M.BATCH_ID
+      WHERE 
+        CNT = 0 OR CNT IS NULL
+    </select>
+-->
+
+    <select id="selectCompletedBatch" resultType="string">
+      SELECT
+      	BATCH_ID
+      FROM
+        MORPHEUS.T_PUSH_BATCH_INFO
+      WHERE
+      	STATUS IN ('S', 'G')
+        AND LOADED <![CDATA[<=]]> SENT
+    </select>
+
+<!-- 
+    <update id="updateBatchCompleted" parameterType="string">
+      MERGE INTO
+        T_PUSH_BATCH_INFO I
+      USING
+      (
+        SELECT
+          BATCH_ID, COUNT(*) AS CNT
+        FROM
+          T_PUSH_BATCH_MSG_COMPLETED
+        WHERE
+          BATCH_ID = #{batchId}
+        GROUP BY BATCH_ID
+      ) C
+      ON
+        (C.BATCH_ID = I.BATCH_ID)
+      WHEN MATCHED THEN
+      UPDATE
+      SET
+        STATUS = 'D'
+      , SENT = CNT
+      , MODDATE = SYSDATE
+    </update> 
+-->  
+
+    <update id="updateBatchCompleted">
+      UPDATE MORPHEUS.T_PUSH_BATCH_INFO
+      SET 
+        STATUS = 'D'
+      , MODDATE = SYSDATE
+      WHERE
+      	STATUS IN ('S', 'G')
+        AND LOADED <![CDATA[<=]]> SENT    
+    </update>
+
+    <update id="updateBatchSentCount" parameterType="BatchData">
+      <selectKey keyProperty="status" resultType="string" order="BEFORE">
+        SELECT 
+          STATUS
+        FROM
+          T_PUSH_BATCH_INFO
+        WHERE
+	      BATCH_ID = #{batchId}
+      </selectKey>
+      
+	  UPDATE T_PUSH_BATCH_INFO
+	  SET 
+	    SENT = SENT + 1
+	  <if test='status == "S"'>
+	  , STATUS = 'G'
+	  </if>
+	  , MODDATE = SYSDATE
+	  WHERE
+	    BATCH_ID = #{batchId}
+    </update>     
+    
+    <delete id="deleteCompletedMsgs">
+      DELETE FROM 
+    	T_PUSH_REALTIME_MSG
+      WHERE 
+        RESERVE_DATE <![CDATA[<]]> SYSDATE - 2/24
+   		AND PROCESS_FLAG = 'X'
+    </delete>
+    
+    <update id="updatePushMasterMsg">
+      UPDATE 
+    	T_PUSH_MSG_RECV_MASTER
+      SET
+        MESSAGE = #{msg}
+      WHERE 
+   		SEQNO = #{seqno}
+    </update>
+            
+    <select id="selectAllowedTime" resultType="map">
+      SELECT
+        ALLOW_YN as allow
+      , BEGIN_TIME as beginTime
+      , END_TIME as endTime
+      FROM
+        MORPHEUS.T_PUSH_CONFIG		
+	</select>
+            
+</mapper>    
